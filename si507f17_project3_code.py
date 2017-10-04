@@ -13,24 +13,27 @@ import requests
 ######### PART 0 #########
 
 # Write your code for Part 0 here.
-def getAltText(url)
+
+def getAltText(url):
 	try:
 		data = open("page.html", "r").read()
 	except:
 		data = requests.get(url).text
 		f = open("page.html", "w")
-		f.write = ("page.html")
+		f.write(data)
 		f.close()
 
-	page = BeautifulSoup(data, "html.parser")
-	images = data.find_all("img")
+	page = BeautifulSoup(data, 'html.parser')
+	images = page.find_all('img')
 	altText = []
 
+	print(images)
+
 	for pic in images:
-		altText.append(images.get("alt", "No alternative text provided!"))
+		altText.append(pic.get('alt', "No alternative text provided!"))
 
 	for text in altText:
-		print('{}\n\n').format(text)
+		print('{}\n\n'.format(text))
 
 getAltText("http://newmantaylor.com/gallery.html")
 
