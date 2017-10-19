@@ -23,23 +23,32 @@ def getAltText(url):
 		f.write(data)
 		f.close()
 
-	page = BeautifulSoup(data, 'html.parser')
-	images = page.find_all('img')
+	page = BeautifulSoup(data, "html.parser")
+	images = page.find_all("img")
 	altText = []
 
-	print(images)
-
 	for pic in images:
-		altText.append(pic.get('alt', "No alternative text provided!"))
+		altText.append(pic.get("alt", "No alternative text provided!"))
 
 	for text in altText:
-		print('{}\n\n'.format(text))
+		print("{}\n\n".format(text))
 
 getAltText("http://newmantaylor.com/gallery.html")
 
 ######### PART 1 #########
 
 # Get the main page data...
+try:
+	data = open("nps_gov_data.htm", "r")
+except:
+	data = requests.get("https://www.nps.gov/index.htm").text
+	f = open("nps_gov_data.htm", "w")
+	f.write(data)
+	f.close()
+
+def 
+
+
 
 # Try to get and cache main page data if not yet cached
 # Result of a following try/except block should be that
