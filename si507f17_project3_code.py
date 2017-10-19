@@ -101,6 +101,7 @@ def getNPS_data(returnData = True, makeSoup = False):
 		f = open("nps_gov_data.html", "wb")
 		f.write(nps_data.encode("utf-8"))
 		f.close()
+		print("Got new data from NPS home page.")
 
 	if makeSoup == True:
 		nps_soup = BeautifulSoup(nps_data, "html.parser")
@@ -118,11 +119,11 @@ def getState_data(state, returnData = True):
 
 		for link in menuData_soup.find_all("a"):
 			if link.text.lower() == "{}".format(state).lower():
-				print(link.get("href"))
 				state_data = requests.get("https://www.nps.gov{}".format(link.get("href"))).text
 				f = open("{}_data.html".format(state).lower(), "wb")
 				f.write(state_data.encode("utf-8"))
 				f.close
+				print("Got new data from {}.".format(link.get("href")))
 
 	if returnData == True:
 		return state_data
