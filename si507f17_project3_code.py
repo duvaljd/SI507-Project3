@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import unittest
 import requests
+import csv
 
 #########
 ## Instr note: the outline comments will stay as suggestions, otherwise it's too difficult.
@@ -106,10 +107,10 @@ def getNPS_data(returnData = True, makeSoup = False):
 	if makeSoup == True:
 		nps_soup = BeautifulSoup(nps_data, "html.parser")
 		menuData_soup = nps_soup.find('ul', attrs={"class":["dropdown-menu", "SearchBar-keywordSearch"]})
-		return menuData_soup
+		return(menuData_soup)
 
 	elif returnData == True:
-		return nps_data
+		return(nps_data)
 
 def getState_data(state, returnData = True):
 	try:
@@ -126,11 +127,14 @@ def getState_data(state, returnData = True):
 				print("Got new data from {}.".format(link.get("href")))
 
 	if returnData == True:
-		return state_data
+		return(state_data)
 
 ak_data = getState_data("Arkansas")
+ak_soup = BeautifulSoup(ak_data, "html.parser")
 ca_data = getState_data("California")
-mi_data =getState_data("Michigan")
+ca_soup = BeautifulSoup(ca_data, "html.parser")
+mi_data = getState_data("Michigan")
+mi_soup = BeautifulSoup(mi_data, "html.parser")
 
 ######### PART 2 #########
 
@@ -159,28 +163,36 @@ class NationalSite(object):
 
 	def __init__(self, parkSoup):
 		self.parkSoup = parkSoup
-		self.location = parkSoup.h4.text
-		self.name = parkSoup.h3.text
-		self.type = parkSoup.h2.text
-		self.description = parkSoup.p.text
+		self.location = str(parkSoup.h4.text)
+		self.name = str(parkSoup.h3.text).replace("/n", "")
+		self.type = str(parkSoup.h2.text).replace("/n", "")
+		self.description = str(parkSoup.p.text).replace("\n", "")
 
 	def __str__(self):
-		return "{} | {}".format(self.name, self.location)
+		return("{} | {}".format(self.name, self.location))
 
 	def __contains__(self, inParkName):
 		if str(inParkName).lower() in self.name.lower():
-			return True
+			return(True)
 
 	def get_mailing_address(self):
 		urlSoup = self.parkSoup.select_one("a[href*=basic]")
 		data = requests.get(urlSoup.get("href")).text
 		basicInfoSoup = BeautifulSoup(data, "html.parser")
-		street = basicInfoSoup.find("span", itemprop = "streetAddress")
-		locality = basicInfoSoup.find("span", itemprop = "addressLocality")
-		region = basicInfoSoup.find("span", itemprop = "addressRegion")
-		code = basicInfoSoup.find("span", itemprop = "postalCode")
+		# street = basicInfoSoup.find("span", itemprop = "streetAddress")
+		# locality = basicInfoSoup.find("span", itemprop = "addressLocality")
+		# region = basicInfoSoup.find("span", itemprop = "addressRegion")
+		# code = basicInfoSoup.find("span", itemprop = "postalCode")
+		wholeAddress = basicInfoSoup.find("p", {"class" : "adr"}).text
+		wholeAddress = wholeAddress.strip()
 
-		return(str("{} / {} / {} / {}").format(street.text, locality.text, region.text, code.text)) 
+		# print(wholeAddress.replace("\n\n\n", " / ").replace("\n\n", " / ").replace("\n", " / "))
+
+		if str(wholeAddress) == "":
+			return("None")
+
+		else:
+			return(str(wholeAddress.replace("\n\n\n", " / ").replace("\n\n", " / ").replace("\n", " / ")))
 
 ## Recommendation: to test the class, at various points, uncomment the following code and invoke some of the methods / check out the instance variables of the test instance saved in the variable sample_inst:
 
@@ -197,18 +209,50 @@ sampleSite = NationalSite(soup_park_inst)
 
 # HINT: Get a Python list of all the HTML BeautifulSoup instances that represent each park, for each state.
 
+def getParks(stateSoup):
+	parkList = []
+	listParks = stateSoup.find("ul", {"id": "list_parks"}).find_all("li", {"class": "clearfix"})
+	for li in listParks:
+		parkList.append(NationalSite(li))
+		
+	return(parkList)
+
+arkansas_natl_sites = getParks(ak_soup)
+california_natl_sites = getParks(ca_soup)
+michigan_natl_sites = getParks(mi_soup)
+
+def writeInfo(parkSoup_list, fileName):
+	with open(fileName, "w", newline="") as f:
+		writer = csv.writer(f)
+		
+		writer.writerow(['Name', 'Location', 'Type', 'Address', 'Description'])
+		
+		for park in parkSoup_list:
+			if str(park.name) == "":
+				park.name = "None"
+			if str(park.location) == "":
+				park.location = "None"
+			if str(park.type) == "":
+				park.type = "None"
+			if str(park.description) == "":
+				park.description = "None"
+
+			writer.writerow([park.name, park.location, park.type, park.get_mailing_address(), park.description.strip()])
+
+	f.close()
+
+writeInfo(arkansas_natl_sites, "arkansas.csv")
+writeInfo(california_natl_sites, "california.csv")
+writeInfo(michigan_natl_sites, "michigan.csv")
 
 
-
-##Code to help you test these out:
+#Code to help you test these out:
 # for p in california_natl_sites:
 # 	print(p)
 # for a in arkansas_natl_sites:
 # 	print(a)
 # for m in michigan_natl_sites:
 # 	print(m)
-
-
 
 ######### PART 4 #########
 
